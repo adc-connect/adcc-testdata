@@ -1,0 +1,18 @@
+# Backup files and system temporaries
+*~
+.*.swp
+*.swo
+
+# compiled files and distribution files
+*.pyc
+/build
+*.o
+/dist
+*.egg-info
+/.eggs
+
+# Testing
+.pytest_cache
+
+# Jupyter
+.ipynb_checkpoints/
