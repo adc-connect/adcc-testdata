@@ -183,8 +183,8 @@ class AdcTaskBase:
 
     @classmethod
     def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=None, n_guess_doubles=None,
-                             solver=None, conv_tol=None, residual_threshold=None, maxiter=None,
-                             maxsubspace=None, **kwargs):
+                             solver=None, conv_tol=None, residual_min_norm=None, max_iter=None,
+                             max_subspace=None, **kwargs):
         """
         Add parameters which distinguish between the various adc methods to the parameter tree.
         `n_states` is the number of states to compute in this very irrep.
@@ -204,16 +204,16 @@ class AdcTaskBase:
         # Set solver parameters
         tirrep["solver"] = solver
         tirrep[solver + "/convergence"] = str(conv_tol)
-        tirrep[solver + "/maxiter"] = str(maxiter)
-        tirrep[solver + "/threshold"] = str(residual_threshold)
+        tirrep[solver + "/maxiter"] = str(max_iter)
+        tirrep[solver + "/threshold"] = str(residual_min_norm)
 
         # Special adjustment for davidson
         if solver == "davidson":
-            if maxsubspace == 0:
-                maxsubspace = 5 * n_states
-            elif maxsubspace < n_states:
-                maxsubspace = 2 * n_states
-            tirrep["davidson/maxsubspace"] = str(maxsubspace)
+            if max_subspace == 0:
+                max_subspace = 5 * n_states
+            elif max_subspace < n_states:
+                max_subspace = 2 * n_states
+            tirrep["davidson/maxsubspace"] = str(max_subspace)
 
 
 class TaskAdc0(AdcTaskBase):

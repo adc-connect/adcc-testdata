@@ -27,8 +27,9 @@ try:
 except ImportError:
     raise ImportError("Package pyadcman not found. Please install this package first.")
 
+from .run_adcman import run_adcman
 
-__all__ = ["HdfProvider"]
+__all__ = ["HdfProvider", "run_adcman"]
 
 __version__ = "0.1.0"
 __license__ = "GPL v3"

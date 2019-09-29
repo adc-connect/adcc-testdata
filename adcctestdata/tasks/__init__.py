@@ -20,13 +20,13 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from . import MpTasks, PiTasks
+from . import AdcTasks, MpTasks, PiTasks
 
 __all__ = ["parameters"]
 
 
 def resolve_method(method):
-    for module in [MpTasks, PiTasks]:
+    for module in [MpTasks, PiTasks, AdcTasks]:
         for clsstr in dir(module):
             if not clsstr.startswith("Task"):
                 continue
@@ -47,22 +47,23 @@ def collect_task_parameters(task, **kwargs):
     return ret
 
 
-def parameters(method, print_level=0, **kwargs):
+def parameters(basemethod, adc_variant, print_level=0, properties=True, **kwargs):
     """
     Return the parameter tree required for running the passed
     method under the passed parameters. Method should be a string.
     """
-    # TODO update, because sometimes base method is not equal to
-    #      method (e.g. cvs)
-    basemethod = method
-
     task = resolve_method(basemethod)
-    params = collect_task_parameters(task, **kwargs)
+    params = collect_task_parameters(task, adc_variant=adc_variant,
+                                     print_level=print_level, **kwargs)
 
-    # TODO Sometimes we need to set extra stuff,
-    #      e.g. the core parameter in core-valence separation.
+    if "cvs" in adc_variant:
+        params["core"] = "1"  # Enable CVS
 
-    # Keys required for sucessful execution
+    if properties:
+        # TODO Add property keys
+        pass
+
+    # Keys required for successful execution
     if "prop" not in params.get("hf", {}):
         params["hf/prop"] = "0"  # False
     if "prop" not in params.get("mp2", {}):
