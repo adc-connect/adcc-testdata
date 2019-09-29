@@ -115,15 +115,24 @@ class AdcTaskBase:
             tadc["uhf"] = "0"
             if n_singlets > 0:
                 tadc["rhf/singlets"] = "1"
-                cls.add_spin_params_to(tadc.submap("rhf/singlets"), "singlet", n_singlets, **kwargs)
+                cls.add_state_params_to(tadc.submap("rhf/singlets"), "singlet", n_singlets, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("rhf/singlets"), "singlet", n_singlets,
+                                              n_singlets, **kwargs)
             else:
                 tadc["rhf/singlets"] = "0"
 
             if n_triplets > 0:
                 tadc["rhf/triplets"] = "1"
-                cls.add_spin_params_to(tadc.submap("rhf/triplets"), "triplet", n_triplets, **kwargs)
+                cls.add_state_params_to(tadc.submap("rhf/triplets"), "triplet", n_triplets, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("rhf/triplets"), "triplet", n_triplets,
+                                              n_triplets, **kwargs)
             else:
                 tadc["rhf/triplets"] = "0"
+
+            if n_singlets > 0 and n_triplets > 0:
+                # Singlet 2 triplet properties
+                cls.add_state2state_params_to(tadc.submap("rhf"), "s2t", n_singlets,
+                                              n_triplets, **kwargs)
         else:
             if n_singlets > 0 or n_triplets > 0:
                 raise ValueError("Cannot use n_singlets or n_triplets for unrestricted references.")
@@ -132,10 +141,11 @@ class AdcTaskBase:
 
             tadc["rhf"] = "0"
             tadc["uhf"] = "1"
-            cls.add_spin_params_to(tadc.submap("uhf"), "any", n_states, **kwargs)
+            cls.add_state_params_to(tadc.submap("uhf"), "any", n_states, **kwargs)
+            cls.add_state2state_params_to(tadc.submap("uhf"), "any", n_states, n_states, **kwargs)
 
     @classmethod
-    def add_spin_params_to(cls, tspin, spin, n_states, **kwargs):
+    def add_state_params_to(cls, tspin, spin, n_states, **kwargs):
         """
         Add the singlet/triplet/any parameters to `tspin`, where `spin`
         is "singlet", "triplet" or "any" and `n_states` is the number of states
@@ -144,10 +154,10 @@ class AdcTaskBase:
         # TODO This assumes only a single irrep
         irrep = "0"
         tspin[irrep] = "1"  # enable irrep
-        cls.add_irrep_params_to(tspin.submap(irrep), spin, irrep, n_states, **kwargs)
+        cls.add_state_irrep_params_to(tspin.submap(irrep), spin, irrep, n_states, **kwargs)
 
     @classmethod
-    def add_irrep_params_to(cls, tirrep, spin, irrep, n_states, adc_variant=[], **kwargs):
+    def add_state_irrep_params_to(cls, tirrep, spin, irrep, n_states, adc_variant=[], **kwargs):
         """
         Add the subtree data for a particular irrep. Adds keys like:
           - solver
@@ -220,6 +230,26 @@ class AdcTaskBase:
             elif max_subspace < n_states:
                 max_subspace = 2 * n_states
             tirrep["davidson/maxsubspace"] = str(max_subspace)
+
+    @classmethod
+    def add_state2state_params_to(cls, tspin, spin, n_states1, n_states2, **kwargs):
+        """
+        Parameters for state2state properties
+        """
+        tspin["isr"] = "1"
+        irrep1 = irrep2 = "0"  # TODO Assume only one irrep
+
+        tirrep = tspin.submap("isr/" + irrep1 + "-" + irrep2)
+        tirrep["."] = "1"      # Enable state2state for irrep
+        tirrep["optdm"] = "1"  # Transition density matrices
+        tirrep["tprop"] = "1"  # Transition properties
+
+        if spin in ["s2t", "any"]:
+            # Spin-orbit coupling
+            tirrep["tprop/soc"] = "0"
+        if spin != "s2t":
+            tirrep["tprop/dipole"] = "1"
+            tirrep["tprop/rsq"] = "0"
 
 
 class TaskAdc0(AdcTaskBase):
