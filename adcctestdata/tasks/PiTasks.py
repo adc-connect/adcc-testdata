@@ -33,8 +33,8 @@ class TaskPia:
     dependencies = [TaskMp1]
     name = "pia"
 
-    @staticmethod
-    def parameters(**kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({"gen_prereq/pia": "1"})
 
 
@@ -47,6 +47,6 @@ class TaskPib:
     dependencies = [TaskMp1]
     name = "pib"
 
-    @staticmethod
-    def parameters(**kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({"gen_prereq/pib": "1"})

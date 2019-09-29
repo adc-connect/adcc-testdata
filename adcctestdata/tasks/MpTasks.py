@@ -38,8 +38,8 @@ class TaskMp1:
     dependencies = []
     name = "mp1"
 
-    @staticmethod
-    def parameters(**kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({"mp1": "1"})  # "1" == true
 
 
@@ -56,8 +56,8 @@ class TaskMp2:
     dependencies = [TaskMp1]
     name = "mp2"
 
-    @staticmethod
-    def parameters(*kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({
             "mp2": "1",
             "mp2/opdm": "1",   # Note: This is always needed
@@ -75,8 +75,8 @@ class TaskPiOovv:
     dependencies = [TaskMp1]
     name = "pi_oovv"
 
-    @staticmethod
-    def parameters(**kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({
             "gen_prereq/pi3": "1",
             "gen_prereq/pi4": "1",
@@ -93,8 +93,8 @@ class TaskMp2Td2:
     dependencies = [TaskMp2, TaskPiOovv]
     name = "mp2td2"
 
-    @staticmethod
-    def parameters(*kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({"mp2/td2": "1"})
 
 
@@ -108,6 +108,6 @@ class TaskMp3:
     dependencies = [TaskMp2Td2]
     name = "mp3"
 
-    @staticmethod
-    def parameters(*kwargs):
+    @classmethod
+    def parameters(cls, **kwargs):
         return CtxMap({"mp3": "1"})
