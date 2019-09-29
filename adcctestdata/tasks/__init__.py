@@ -47,7 +47,7 @@ def collect_task_parameters(task, **kwargs):
     return ret
 
 
-def parameters(basemethod, adc_variant, print_level=0, properties=True, **kwargs):
+def parameters(basemethod, adc_variant, print_level=0, **kwargs):
     """
     Return the parameter tree required for running the passed
     method under the passed parameters. Method should be a string.
@@ -56,18 +56,7 @@ def parameters(basemethod, adc_variant, print_level=0, properties=True, **kwargs
     params = collect_task_parameters(task, adc_variant=adc_variant,
                                      print_level=print_level, **kwargs)
 
+    params["print_level"] = str(print_level)
     if "cvs" in adc_variant:
         params["core"] = "1"  # Enable CVS
-
-    if properties:
-        # TODO Add property keys
-        pass
-
-    # Keys required for successful execution
-    if "prop" not in params.get("hf", {}):
-        params["hf/prop"] = "0"  # False
-    if "prop" not in params.get("mp2", {}):
-        params["mp2/prop"] = "0"  # False
-
-    params["print_level"] = str(print_level)
     return params

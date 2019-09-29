@@ -178,6 +178,12 @@ class AdcTaskBase:
         # Two-photon absorption
         # tirrep["tpa"] = "1"
 
+        # Properties
+        for pt in ["prop", "tprop"]:
+            tirrep[pt + "/."] = "1"
+            tirrep[pt + "/dipole"] = "1"
+            tirrep[pt + "/rsq"] = "0"
+
         # Setup solver-related parameters inside the subtree
         cls.add_solver_params_to(tirrep, n_states, **kwargs)
 

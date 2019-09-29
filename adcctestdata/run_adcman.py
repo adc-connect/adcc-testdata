@@ -35,11 +35,22 @@ def get_valid_methods():
     return ret
 
 
+def as_tensor_bb(mospaces, array, symmetric=True):
+    assert array.ndim == 2
+    assert array.shape[0] == array.shape[1]
+    sym = pyadcman.Symmetry(mospaces, "bb",
+                            {"b": (array.shape[0], 0)})
+    if symmetric:
+        sym.permutations = ["ij", "ji"]
+    tensor = pyadcman.Tensor(sym)
+    tensor.set_from_ndarray(array)
+    return tensor
+
+
 def run_adcman(data, method, core_orbitals=[], frozen_core=[], frozen_virtual=[],
                n_singlets=None, n_triplets=None, n_states=None, n_spin_flip=None,
                max_subspace=0, conv_tol=1e-6, max_iter=60, print_level=1,
-               residual_min_norm=1e-12, n_guess_singles=0, n_guess_doubles=0,
-               properties=True):
+               residual_min_norm=1e-12, n_guess_singles=0, n_guess_doubles=0):
     """
     Davidson eigensolver for ADC problems
 
@@ -141,21 +152,26 @@ def run_adcman(data, method, core_orbitals=[], frozen_core=[], frozen_virtual=[]
         raise ValueError("Cannot request CVS variant if no core orbitals selected.")
 
     # Build adcman parameter tree
-    params = tasks.parameters(base_method, adc_variant, print_level=print_level, properties=properties,
+    params = tasks.parameters(base_method, adc_variant, print_level=print_level,
                               restricted=refstate.restricted,
                               n_states=n_states, n_singlets=n_singlets, n_triplets=n_triplets,
                               n_guess_singles=n_guess_singles, n_guess_doubles=n_guess_doubles,
                               solver="davidson", conv_tol=conv_tol, residual_min_norm=residual_min_norm,
                               max_iter=max_iter, max_subspace=max_subspace)
 
-    if properties:
-        # TODO append property parameters
-        pass
-
     # Build adcman context tree
     incontext = refstate.to_ctx()
-    if properties:
-        # TODO append property integrals
-        pass
+
+    # Nuclear dipole moment
+    nucmm = [refstate.nuclear_total_charge] + refstate.nuclear_dipole
+    incontext["ao/nucmm"] = nucmm + 6 * [0.0]
+
+    # Electric dipole integrals
+    integrals_ao = data.operator_integral_provider
+    for i, comp in enumerate(["x", "y", "z"]):
+        dip_bb = as_tensor_bb(refstate.mospaces,
+                              integrals_ao.electric_dipole[i],
+                              symmetric=True)
+        incontext["ao/d{}_bb".format(comp)] = dip_bb
 
     return pyadcman.run(incontext, params)

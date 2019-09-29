@@ -27,6 +27,22 @@ from pyadcman import CtxMap
 #   adcman/adcman/qchem/params_reader.C
 
 
+class TaskHf:
+    """
+    Computes Hf properties into context.
+    """
+    dependencies = []
+    name = "hf"
+
+    @classmethod
+    def parameters(cls, **kwargs):
+        return CtxMap({
+            "hf/prop": "1",
+            "hf/prop/dipole": "1",
+            "hf/prop/rsq": "0"
+        })
+
+
 class TaskMp1:
     """
     Computes these objects into the context:
@@ -35,7 +51,7 @@ class TaskMp1:
         - MP t amplitudes
             /mp1/t_o1o1v1v1
     """
-    dependencies = []
+    dependencies = [TaskHf]
     name = "mp1"
 
     @classmethod
@@ -61,6 +77,9 @@ class TaskMp2:
         return CtxMap({
             "mp2": "1",
             "mp2/opdm": "1",   # Note: This is always needed
+            "mp2/prop": "1",
+            "mp2/prop/dipole": "1",
+            "mp2/prop/rsq": "0"
         })
 
 
