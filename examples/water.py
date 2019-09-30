@@ -20,19 +20,29 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .HdfProvider import HdfProvider
+import os
+import adcctestdata as atd
 
-try:
-    import pyadcman
-except ImportError:
-    raise ImportError("Package pyadcman not found. Please install this package first.")
+from pyscf import gto, scf
 
-from .dump_pyscf import dump_pyscf
-from .run_adcman import run_adcman
+if not os.path.isfile("water.hdf5"):
+    mol = gto.M(
+        atom="""
+        O 0 0 0
+        H 0 0 1.795239827225189
+        H 1.693194615993441 0 -0.599043184453037
+        """,
+        basis='def2-tzvp',
+        unit="Bohr"
+    )
+    mf = scf.RHF(mol)
+    mf.conv_tol = 1e-13
+    mf.conv_tol_grad = 1e-12
+    mf.diis = scf.EDIIS()
+    mf.diis_space = 3
+    mf.max_cycle = 500
+    mf.kernel()
 
-__all__ = ["HdfProvider", "run_adcman", "dump_pyscf"]
+    atd.dump_pyscf(mf, "water.hdf5")
 
-__version__ = "0.1.0"
-__license__ = "GPL v3"
-__authors__ = ["Michael F. Herbst"]
-__email__ = "developers@adc-connect.org"
+atd.run_adcman("water.hdf5", "adc2", n_singlets=5, n_triplets=3, print_level=100)

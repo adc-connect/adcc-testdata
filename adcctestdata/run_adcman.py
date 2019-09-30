@@ -23,6 +23,7 @@
 from . import tasks
 from .HdfProvider import HdfProvider
 
+import h5py
 import pyadcman
 
 
@@ -84,6 +85,10 @@ def run_adcman(data, method, core_orbitals=[], frozen_core=[], frozen_virtual=[]
                              computed, then n_guess_singles = number of
                              excited states to compute
     """
+    if isinstance(data, str) and data.endswith(".hdf5"):
+        data = HdfProvider(h5py.File(data, "r"))
+    if isinstance(data, h5py.File):
+        data = HdfProvider(data)
     if not isinstance(data, HdfProvider):
         raise TypeError("data needs to be an HdfProvider instance")
     refstate = pyadcman.ReferenceState(data, core_orbitals, frozen_core, frozen_virtual)
