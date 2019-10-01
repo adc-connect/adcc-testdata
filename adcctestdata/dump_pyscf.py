@@ -29,7 +29,7 @@ import h5py
 
 def dump_pyscf(scfres, out):
     """
-    Convert pyscf SCF result to HDF5 file
+    Convert pyscf SCF result to HDF5 file in adcc format
     """
     if not isinstance(scfres, scf.hf.SCF):
         raise TypeError("Unsupported type for dump_pyscf.")

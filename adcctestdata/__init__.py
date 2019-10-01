@@ -30,7 +30,9 @@ except ImportError:
 from .dump_pyscf import dump_pyscf
 from .run_adcman import run_adcman
 
-__all__ = ["HdfProvider", "run_adcman", "dump_pyscf"]
+from .dump_reference import dump_reference
+
+__all__ = ["HdfProvider", "run_adcman", "dump_pyscf", "dump_reference"]
 
 __version__ = "0.1.0"
 __license__ = "GPL v3"
