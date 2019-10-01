@@ -131,10 +131,12 @@ class HdfProvider(HartreeFockProvider):
 
         # Do not forget the next line, otherwise weird errors result
         super().__init__()
-        self.data = data
 
+        if isinstance(data, str) and data.endswith(".hdf5"):
+            data = h5py.File(data)
         if not isinstance(data, h5py.File):
             raise TypeError("data should be an h5py.File.")
+        self.data = data
 
         if "r" not in data.mode:
             raise ValueError("Passed h5py.File stream (filename: {}) not "
