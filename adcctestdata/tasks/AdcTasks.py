@@ -20,7 +20,7 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .MpTasks import TaskMp1, TaskMp2Td2, TaskMp3
+from .MpTasks import TaskHf, TaskMp1, TaskMp2Td2, TaskMp3
 from .PiTasks import TaskPia, TaskPib
 
 from pyadcman import CtxMap
@@ -253,7 +253,7 @@ class AdcTaskBase:
 
 
 class TaskAdc0(AdcTaskBase):
-    dependencies = []
+    dependencies = [TaskHf]
     name = "adc0"
 
 
