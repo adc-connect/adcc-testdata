@@ -124,9 +124,9 @@ def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc", n_state
             continue
         available_kinds.append(kind)
 
-        # From 2 states we save everything
+        # Up to n_states_extract states we save everything
         if n_states_full is not None:
-            n_states_extract = max(n_states_full, n_states)
+            n_states_extract = min(n_states_full, n_states)
         else:
             n_states_extract = n_states
 
@@ -174,7 +174,46 @@ def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc", n_state
                                data=np.asarray(eigenvectors_doubles))
     # for kind
 
+    # Store which kinds are available
     out.create_dataset("available_kinds", shape=(len(available_kinds), ),
                        data=np.array(available_kinds,
                                      dtype=h5py.special_dtype(vlen=str)))
+
+    #
+    # ADC ISR (state2state properties)
+    #
+    kind_trees = {
+        "singlet": method_tree + "/rhf/isr/singlets/0-0",
+        "triplet": method_tree + "/rhf/isr/triplets/0-0",
+        "state": method_tree + "/uhf/isr/0-0",
+        "spin_flip": method_tree + "/uhf/isr/0-0",
+    }
+    for kind in available_kinds:
+        n_states = adc[kind + "/eigenvalues"].shape[0]
+        if n_states_full is not None:
+            n_states_extract = min(n_states_full, n_states)
+        else:
+            n_states_extract = n_states
+
+        s2s = adc.create_group(kind + "/state_to_state")
+        for ifrom in range(n_states - 1):
+            tdm_bb_a = []
+            tdm_bb_b = []
+            transition_dipoles = []
+
+            for ito in range(ifrom + 1, n_states):
+                pairtree = ctx.submap(kind_trees[kind] + "/{}-{}".format(ito, ifrom))
+
+                transition_dipoles.append(pairtree["dipole"])
+
+                if ito <= n_states_extract and ifrom <= n_states_extract:
+                    tdm_bb_a.append(pairtree["optdm/dm_bb_a"].to_ndarray())
+                    tdm_bb_b.append(pairtree["optdm/dm_bb_b"].to_ndarray())
+
+            s2s_from = s2s.create_group("from_{}".format(ifrom))
+            s2s_from["transition_dipole_moments"] = np.asarray(transition_dipoles)
+            if tdm_bb_a and tdm_bb_b:
+                s2s_from["state_to_excited_tdm_bb_a"] = np.asarray(tdm_bb_a)
+                s2s_from["state_to_excited_tdm_bb_b"] = np.asarray(tdm_bb_b)
+
     return out
