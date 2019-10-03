@@ -23,18 +23,17 @@
 from .HdfProvider import HdfProvider
 
 try:
-    import pyadcman
+    import pyadcman  # noqa: F401
 except ImportError:
     raise ImportError("Package pyadcman not found. Please install this package first.")
 
 from .dump_pyscf import dump_pyscf
 from .run_adcman import run_adcman
-
 from .dump_reference import dump_reference
 
 __all__ = ["HdfProvider", "run_adcman", "dump_pyscf", "dump_reference"]
 
-__version__ = "0.1.0"
+__version__ = "0.0.0"
 __license__ = "GPL v3"
 __authors__ = ["Michael F. Herbst"]
 __email__ = "developers@adc-connect.org"
