@@ -16,3 +16,7 @@
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Dumped data
+/*.hdf5
+/examples/*.hdf5
