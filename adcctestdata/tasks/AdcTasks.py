@@ -198,9 +198,9 @@ class AdcTaskBase:
         cls.add_solver_params_to(tirrep, n_states, **kwargs)
 
     @classmethod
-    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=None, n_guess_doubles=None,
-                             solver=None, conv_tol=None, residual_min_norm=None, max_iter=None,
-                             max_subspace=None, **kwargs):
+    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=0, n_guess_doubles=0,
+                             solver="davidson", conv_tol=1e-6, residual_min_norm=1e-12, max_iter=0,
+                             max_subspace=60, **kwargs):
         """
         Add parameters which distinguish between the various adc methods to the parameter tree.
         `n_states` is the number of states to compute in this very irrep.
