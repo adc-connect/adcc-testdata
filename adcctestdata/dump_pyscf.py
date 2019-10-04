@@ -45,7 +45,7 @@ def dump_pyscf(scfres, out):
     if isinstance(out, h5py.File):
         data = out
     elif isinstance(out, str):
-        data = h5py.File(out)
+        data = h5py.File(out, "w")
     else:
         raise TypeError("Unknown type for out, only HDF5 file and str supported.")
 

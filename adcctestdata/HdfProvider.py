@@ -133,7 +133,7 @@ class HdfProvider(HartreeFockProvider):
         super().__init__()
 
         if isinstance(data, str) and data.endswith(".hdf5"):
-            data = h5py.File(data)
+            data = h5py.File(data, "r")
         if not isinstance(data, h5py.File):
             raise TypeError("data should be an h5py.File.")
         self.data = data
