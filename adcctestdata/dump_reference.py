@@ -59,7 +59,7 @@ def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc", n_state
     if isinstance(dumpfile, h5py.File):
         out = dumpfile
     elif isinstance(dumpfile, str):
-        out = h5py.File(dumpfile)
+        out = h5py.File(dumpfile, "w")
     else:
         raise TypeError("Unknown type for out, only HDF5 file and str supported.")
 

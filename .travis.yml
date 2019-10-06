@@ -1,0 +1,24 @@
+dist: xenial
+language: python
+cache: pip
+python:
+  - "3.5"
+
+addons:
+  apt:
+    packages:
+      - libopenblas-base
+
+branches:
+  only:
+    # Only build master and version tags
+    - master
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+
+install:
+  - travis_retry pip install -r requirements.txt
+  - travis_retry pip install flake8 pytest
+  - bash .travis/get_pyadcman.sh
+
+script:
+  - flake8 && python3 setup.py test

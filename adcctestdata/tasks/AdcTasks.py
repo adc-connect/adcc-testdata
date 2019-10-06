@@ -31,8 +31,6 @@ from pyadcman import CtxMap
 
 
 class AdcTaskBase:
-    # TODO copy function docstrings from c++
-
     @classmethod
     def adc_level(cls):
         if cls.name == "adc0":

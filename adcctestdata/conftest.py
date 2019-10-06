@@ -20,20 +20,12 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .HdfProvider import HdfProvider
+import os
 
-try:
-    import pyadcman  # noqa: F401
-except ImportError:
-    raise ImportError("Package pyadcman not found. Please install this package first.")
 
-from .dump_pyscf import dump_pyscf
-from .run_adcman import run_adcman
-from .dump_reference import dump_reference
+def pytest_runtestloop(session):
+    import pyadcman
 
-__all__ = ["HdfProvider", "run_adcman", "dump_pyscf", "dump_reference"]
-
-__version__ = "0.1.0"
-__license__ = "GPL v3"
-__authors__ = ["Michael F. Herbst"]
-__email__ = "developers@adc-connect.org"
+    # Reduce threads in Travis session
+    if "TRAVIS" in os.environ or "CI" in os.environ:
+        pyadcman.thread_pool.reinit(2, 3)

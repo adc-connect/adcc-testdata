@@ -209,7 +209,7 @@ def run_adcman(
     if "cvs" in adc_variant and not refstate.has_core_occupied_space:
         raise ValueError("Cannot request CVS variant if no core orbitals selected.")
 
-    if refstate.has_core_occupied_space and not "cvs" in adc_variant:
+    if refstate.has_core_occupied_space and "cvs" not in adc_variant:
         raise ValueError("Cannot request core orbitals without CVS variant.")
 
     # Build adcman parameter tree
