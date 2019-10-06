@@ -24,62 +24,61 @@ import os
 import tempfile
 import unittest
 import numpy as np
+import numpy.testing
 
 from pyscf import gto, scf
-from numpy.testing import assert_allclose
 
 import adcctestdata as atd
 
 
-class TestWater(unittest.TestCase):
+def assert_allclose(x, y):
+    numpy.testing.assert_allclose(x, y, atol=1e-6)
+
+
+class TestCn(unittest.TestCase):
     def run_scf(self):
-        fn = "water_sto3g.hdf5"
+        fn = "cn_sto3g.hdf5"
         if os.path.isfile(fn):
             return fn
 
         mol = gto.M(
             atom="""
-            O 0 0 0
-            H 0 0 1.795239827225189
-            H 1.693194615993441 0 -0.599043184453037
+            C 0 0 0
+            N 0 0 2.2143810738114829
             """,
+            spin=1,
             basis='sto-3g',
-            unit="Bohr"
+            unit="Bohr",
         )
-        mf = scf.RHF(mol)
+        mf = scf.UHF(mol)
         mf.conv_tol = 1e-11
         mf.conv_tol_grad = 1e-10
+        mf.diis = scf.EDIIS()
+        mf.diis_space = 5
+        mf.max_cycle = 500
         mf.kernel()
         return atd.dump_pyscf(mf, fn)
 
-    def test_water_adc2(self):
+    def test_cn_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
             res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=5, n_triplets=3, print_level=2)
-            assert_allclose(res["adc/singlet/eigenvalues"][()],
-                            np.array([0.47051314, 0.57255495, 0.59367335, 0.71296882, 0.83969732]))
-            assert_allclose(res["adc/triplet/eigenvalues"][()],
-                            np.array([0.40288477, 0.4913253, 0.52854722]))
+                                     n_states=5, print_level=2)
+            assert_allclose(res["adc/state/eigenvalues"][()],
+                            np.array([0.14185414, 0.14185414, 0.1739203, 0.28945843, 0.299935]))
 
-    def test_water_cvs_adc2(self):
+    def test_cn_cvs_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
             res = atd.dump_reference(fn, "cvs-adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=3, n_triplets=3, print_level=2,
-                                     core_orbitals=[0, 7])
-            assert_allclose(res["adc/singlet/eigenvalues"][()],
-                            np.array([20.0045422, 20.08771799, 21.82672127]))
-            assert_allclose(res["adc/triplet/eigenvalues"][()],
-                            np.array([19.95732865, 20.05239094, 21.82672127]))
+                                     n_states=5, print_level=2, core_orbitals=[0, 10])
+            assert_allclose(res["adc/state/eigenvalues"][()],
+                            np.array([14.74651745, 14.84335613, 14.84335613, 15.01768321, 15.01768321]))
 
-    def test_water_fc_adc2(self):
+    def test_cn_fc_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
             res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=3, n_triplets=3, print_level=2,
-                                     frozen_core=[0, 7])
-            assert_allclose(res["adc/singlet/eigenvalues"][()],
-                            np.array([0.47048699, 0.57249152, 0.59374785]))
-            assert_allclose(res["adc/triplet/eigenvalues"][()],
-                            np.array([0.40290068, 0.4913562, 0.52852212]))
+                                     n_states=5, print_level=2, frozen_core=[0, 10])
+            assert_allclose(res["adc/state/eigenvalues"][()],
+                            np.array([0.1419152, 0.1419152, 0.17400268, 0.28946901, 0.29998021]))
