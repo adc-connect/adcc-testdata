@@ -63,10 +63,10 @@ class TestCn(unittest.TestCase):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
             res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5",
-                                     n_states_full=2, n_states=5, print_level=2)
+                                     n_states_full=2, n_states=6, print_level=2)
             assert_allclose(res["adc/state/eigenvalues"][()],
                             np.array([0.14185414, 0.14185414, 0.1739203,
-                                      0.28945843, 0.299935]))
+                                      0.28945843, 0.299935, 0.299935]))
 
     def test_cn_cvs_adc2(self):
         fn = self.run_scf()
