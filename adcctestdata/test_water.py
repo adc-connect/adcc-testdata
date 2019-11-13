@@ -55,19 +55,21 @@ class TestWater(unittest.TestCase):
     def test_water_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
-            res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=5, n_triplets=3, print_level=2)
+            res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5",
+                                     n_states_full=2, n_singlets=5,
+                                     n_triplets=3, print_level=2)
             assert_allclose(res["adc/singlet/eigenvalues"][()],
-                            np.array([0.47051314, 0.57255495, 0.59367335, 0.71296882, 0.83969732]))
+                            np.array([0.47051314, 0.57255495, 0.59367335,
+                                      0.71296882, 0.83969732]))
             assert_allclose(res["adc/triplet/eigenvalues"][()],
                             np.array([0.40288477, 0.4913253, 0.52854722]))
 
     def test_water_cvs_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
-            res = atd.dump_reference(fn, "cvs-adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=3, n_triplets=3, print_level=2,
-                                     core_orbitals=[0, 7])
+            res = atd.dump_reference(fn, "cvs-adc2", tmpdir + "/out.hdf5",
+                                     n_states_full=2, n_singlets=3, n_triplets=3,
+                                     print_level=2, core_orbitals=[0, 7])
             assert_allclose(res["adc/singlet/eigenvalues"][()],
                             np.array([20.0045422, 20.08771799, 21.82672127]))
             assert_allclose(res["adc/triplet/eigenvalues"][()],
@@ -76,9 +78,9 @@ class TestWater(unittest.TestCase):
     def test_water_fc_adc2(self):
         fn = self.run_scf()
         with tempfile.TemporaryDirectory() as tmpdir:
-            res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5", n_states_full=2,
-                                     n_singlets=3, n_triplets=3, print_level=2,
-                                     frozen_core=[0, 7])
+            res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5",
+                                     n_states_full=2, n_singlets=3, n_triplets=3,
+                                     print_level=2, frozen_core=[0, 7])
             assert_allclose(res["adc/singlet/eigenvalues"][()],
                             np.array([0.47048699, 0.57249152, 0.59374785]))
             assert_allclose(res["adc/triplet/eigenvalues"][()],

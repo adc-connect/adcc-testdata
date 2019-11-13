@@ -27,8 +27,8 @@ from .run_adcman import run_adcman
 import h5py
 
 
-def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc", n_states_full=None,
-                   **kwargs):
+def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc",
+                   n_states_full=None, **kwargs):
     """
     Run a reference calculation and dump the computed data as an HDF5 file.
     All kwargs are passed to :py:`run_adcman`.
@@ -202,7 +202,8 @@ def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc", n_state
             transition_dipoles = []
 
             for ito in range(ifrom + 1, n_states):
-                pairtree = ctx.submap(kind_trees[kind] + "/{}-{}".format(ito, ifrom))
+                pairtree = ctx.submap(kind_trees[kind]
+                                      + "/{}-{}".format(ito, ifrom))
 
                 transition_dipoles.append(pairtree["dipole"])
 

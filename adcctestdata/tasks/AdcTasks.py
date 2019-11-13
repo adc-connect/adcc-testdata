@@ -91,8 +91,8 @@ class AdcTaskBase:
         return tree
 
     @classmethod
-    def add_common_adc_params_to(cls, tadc, restricted=False, n_singlets=0, n_triplets=0,
-                                 n_states=0, **kwargs):
+    def add_common_adc_params_to(cls, tadc, restricted=False, n_singlets=0,
+                                 n_triplets=0, n_states=0, **kwargs):
         adc_variant = kwargs.get("adc_variant", [])
         cls.insert_print_subtree(tadc, **kwargs)
 
@@ -102,45 +102,53 @@ class AdcTaskBase:
         # Build restricted / unrestricted subtree
         if restricted:
             if "sf" in adc_variant:
-                raise ValueError("Cannot run spin-flip for restricted references.")
+                raise ValueError("Cannot run spin-flip for restricted "
+                                 "references.")
             if n_states > 0:
                 raise ValueError("Cannot use n_states for restricted references.")
             if n_singlets + n_triplets == 0:
-                raise ValueError("n_singlets + n_triplets needs to be larger 0 for "
-                                 "restricted references.")
+                raise ValueError("n_singlets + n_triplets needs to be larger 0 "
+                                 "for restricted references.")
 
             tadc["rhf"] = "1"
             tadc["uhf"] = "0"
             if n_singlets > 0:
                 tadc["rhf/singlets"] = "1"
-                cls.add_state_params_to(tadc.submap("rhf/singlets"), "singlet", n_singlets, **kwargs)
-                cls.add_state2state_params_to(tadc.submap("rhf/singlets"), "singlet", n_singlets,
+                cls.add_state_params_to(tadc.submap("rhf/singlets"), "singlet",
+                                        n_singlets, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("rhf/singlets"),
+                                              "singlet", n_singlets,
                                               n_singlets, **kwargs)
             else:
                 tadc["rhf/singlets"] = "0"
 
             if n_triplets > 0:
                 tadc["rhf/triplets"] = "1"
-                cls.add_state_params_to(tadc.submap("rhf/triplets"), "triplet", n_triplets, **kwargs)
-                cls.add_state2state_params_to(tadc.submap("rhf/triplets"), "triplet", n_triplets,
+                cls.add_state_params_to(tadc.submap("rhf/triplets"), "triplet",
+                                        n_triplets, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("rhf/triplets"),
+                                              "triplet", n_triplets,
                                               n_triplets, **kwargs)
             else:
                 tadc["rhf/triplets"] = "0"
 
             if n_singlets > 0 and n_triplets > 0:
                 # Singlet 2 triplet properties
-                cls.add_state2state_params_to(tadc.submap("rhf"), "s2t", n_singlets,
-                                              n_triplets, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("rhf"), "s2t",
+                                              n_singlets, n_triplets, **kwargs)
         else:
             if n_singlets > 0 or n_triplets > 0:
-                raise ValueError("Cannot use n_singlets or n_triplets for unrestricted references.")
+                raise ValueError("Cannot use n_singlets or n_triplets for "
+                                 "unrestricted references.")
             if n_states == 0:
-                raise ValueError("n_states needs to be larger 0 for unrestricted references.")
+                raise ValueError("n_states needs to be larger 0 for unrestricted "
+                                 "references.")
 
             tadc["rhf"] = "0"
             tadc["uhf"] = "1"
             cls.add_state_params_to(tadc.submap("uhf"), "any", n_states, **kwargs)
-            cls.add_state2state_params_to(tadc.submap("uhf"), "any", n_states, n_states, **kwargs)
+            cls.add_state2state_params_to(tadc.submap("uhf"), "any", n_states,
+                                          n_states, **kwargs)
 
     @classmethod
     def add_state_params_to(cls, tspin, spin, n_states, **kwargs):
@@ -152,18 +160,20 @@ class AdcTaskBase:
         # TODO This assumes only a single irrep
         irrep = "0"
         tspin[irrep] = "1"  # enable irrep
-        cls.add_state_irrep_params_to(tspin.submap(irrep), spin, irrep, n_states, **kwargs)
+        cls.add_state_irrep_params_to(tspin.submap(irrep), spin, irrep,
+                                      n_states, **kwargs)
 
     @classmethod
-    def add_state_irrep_params_to(cls, tirrep, spin, irrep, n_states, adc_variant=[], **kwargs):
+    def add_state_irrep_params_to(cls, tirrep, spin, irrep, n_states,
+                                  adc_variant=[], **kwargs):
         """
         Add the subtree data for a particular irrep. Adds keys like:
           - solver
           - spin
           - ...
 
-        `tirrep` is the subtree for this irrep, `spin` is "singlet", "triplet" or "any",
-        `n_states` is the number of states of this irrep to be computed
+        `tirrep` is the subtree for this irrep, `spin` is "singlet", "triplet"
+        or "any",`n_states` is the number of states of this irrep to be computed
         """
 
         # Setup spin-related things
@@ -171,7 +181,8 @@ class AdcTaskBase:
         tirrep["irrep"] = irrep
         tirrep["nroots"] = str(n_states)
 
-        # Force using the ADC(3) method, which requires precomputation of pib intermediates
+        # Force using the ADC(3) method, which requires precomputation
+        # of pib intermediates
         tirrep["direct"] = "0"
 
         # Compute density matrices
@@ -196,13 +207,14 @@ class AdcTaskBase:
         cls.add_solver_params_to(tirrep, n_states, **kwargs)
 
     @classmethod
-    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=0, n_guess_doubles=0,
-                             solver="davidson", conv_tol=1e-6, residual_min_norm=1e-12, max_iter=0,
+    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=0,
+                             n_guess_doubles=0, solver="davidson", conv_tol=1e-6,
+                             residual_min_norm=1e-12, max_iter=0,
                              max_subspace=60, **kwargs):
         """
-        Add parameters which distinguish between the various adc methods to the parameter tree.
-        `n_states` is the number of states to compute in this very irrep.
-        Includes keys like:
+        Add parameters which distinguish between the various adc methods to the
+        parameter tree. `n_states` is the number of states to compute in this
+        very irrep. Includes keys like:
           - solver
           - davidson
           - nguess_singles
@@ -230,7 +242,8 @@ class AdcTaskBase:
             tirrep["davidson/maxsubspace"] = str(max_subspace)
 
     @classmethod
-    def add_state2state_params_to(cls, tspin, spin, n_states1, n_states2, **kwargs):
+    def add_state2state_params_to(cls, tspin, spin, n_states1, n_states2,
+                                  **kwargs):
         """
         Parameters for state2state properties
         """

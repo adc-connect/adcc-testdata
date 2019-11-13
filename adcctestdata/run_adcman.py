@@ -96,14 +96,16 @@ def run_adcman(
         Number of states to solve for (has to be None for RHF reference)
 
     n_spin_flip : int or NoneType
-        Number of spin-flip states to be computed (has to be None for RHF reference)
+        Number of spin-flip states to be computed (has to be None for
+        RHF reference)
 
     max_subspace : int
         Maximal subspace size (0 means choose automatically depending
         on the number of states to compute)
 
     conv_tol : float
-        Convergence tolerance on the l2 norm of residuals to consider them converged
+        Convergence tolerance on the l2 norm of residuals to consider
+        them converged
 
     max_iter : int
         Maximal numer of iterations
@@ -131,7 +133,8 @@ def run_adcman(
         data = HdfProvider(data)
     if not isinstance(data, HdfProvider):
         raise TypeError("data needs to be an HdfProvider instance")
-    refstate = pyadcman.ReferenceState(data, core_orbitals, frozen_core, frozen_virtual)
+    refstate = pyadcman.ReferenceState(data, core_orbitals, frozen_core,
+                                       frozen_virtual)
 
     # Parse ADC method into base method and variants
     if method not in get_valid_methods():
@@ -207,7 +210,8 @@ def run_adcman(
         raise ValueError("No excited states to compute.")
 
     if "cvs" in adc_variant and not refstate.has_core_occupied_space:
-        raise ValueError("Cannot request CVS variant if no core orbitals selected.")
+        raise ValueError("Cannot request CVS variant if no core "
+                         "orbitals selected.")
 
     if refstate.has_core_occupied_space and "cvs" not in adc_variant:
         raise ValueError("Cannot request core orbitals without CVS variant.")

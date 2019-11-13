@@ -45,5 +45,6 @@ if not os.path.isfile("water.hdf5"):
 
     atd.dump_pyscf(mf, "water.hdf5")
 
-atd.dump_reference("water.hdf5", "cvs-adc2", "water_cvs_adc2.hdf5", n_states_full=2,
-                   n_singlets=5, n_triplets=3, print_level=100, core_orbitals=[0, 43])
+atd.dump_reference("water.hdf5", "cvs-adc2", "water_cvs_adc2.hdf5",
+                   n_states_full=2, n_singlets=5, n_triplets=3, print_level=100,
+                   core_orbitals=[0, 43])
