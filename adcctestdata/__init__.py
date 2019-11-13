@@ -25,7 +25,8 @@ from .HdfProvider import HdfProvider
 try:
     import pyadcman  # noqa: F401
 except ImportError:
-    raise ImportError("Package pyadcman not found. Please install this package first.")
+    raise ImportError("Package pyadcman not found. Please install this "
+                      "package first.")
 
 from .dump_pyscf import dump_pyscf
 from .run_adcman import run_adcman

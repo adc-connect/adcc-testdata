@@ -45,5 +45,5 @@ if not os.path.isfile("water_uhf.hdf5"):
 
     atd.dump_pyscf(mf, "water_uhf.hdf5")
 
-atd.dump_reference("water_uhf.hdf5", "adc2", "water_uhf_adc2.hdf5", n_states_full=2,
-                   n_states=8, print_level=100)
+atd.dump_reference("water_uhf.hdf5", "adc2", "water_uhf_adc2.hdf5",
+                   n_states_full=2, n_states=8, print_level=100)

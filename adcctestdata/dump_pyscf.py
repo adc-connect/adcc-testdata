@@ -75,9 +75,8 @@ def dump_pyscf(scfres, out):
         fock_bb = (fock_bb, fock_bb)
 
     # Transform fock matrix to MOs
-    fock = tuple(
-        mo_coeff[i].transpose().conj() @ fock_bb[i] @ mo_coeff[i] for i in range(2)
-    )
+    fock = tuple(mo_coeff[i].transpose().conj() @ fock_bb[i] @ mo_coeff[i]
+                 for i in range(2))
     del fock_bb
 
     # Determine number of orbitals
@@ -95,7 +94,8 @@ def dump_pyscf(scfres, out):
     n_alpha = np.sum(mo_occ[0] > 0)
     n_beta = np.sum(mo_occ[1] > 0)
     if n_alpha != np.sum(mo_occ[0]) or n_beta != np.sum(mo_occ[1]):
-        raise ValueError("Fractional occupation numbers are not supported " "in adcc.")
+        raise ValueError("Fractional occupation numbers are not supported "
+                         "in adcc.")
 
     # conv_tol is energy convergence, conv_tol_grad is gradient convergence
     if scfres.conv_tol_grad is None:
@@ -134,8 +134,10 @@ def dump_pyscf(scfres, out):
     # in the primary field and the energy in the secondary
     # for each alpha and beta
     order_array = (
-        np.array(list(zip(-mo_occ[0], mo_energy[0])), dtype=np.dtype("float,float")),
-        np.array(list(zip(-mo_occ[1], mo_energy[1])), dtype=np.dtype("float,float")),
+        np.array(list(zip(-mo_occ[0], mo_energy[0])),
+                 dtype=np.dtype("float,float")),
+        np.array(list(zip(-mo_occ[1], mo_energy[1])),
+                 dtype=np.dtype("float,float")),
     )
     sort_indices = tuple(np.argsort(ary) for ary in order_array)
 
@@ -157,9 +159,8 @@ def dump_pyscf(scfres, out):
 
     non_canonical = np.max(np.abs(data["fock_ff"] - np.diag(data["orben_f"])))
     if non_canonical > data["conv_tol"][()]:
-        raise ValueError(
-            "Running adcc on top of a non-canonical fock " "matrix is not implemented."
-        )
+        raise ValueError("Running adcc on top of a non-canonical fock "
+                         "matrix is not implemented.")
 
     cf_bf = np.hstack((mo_coeff[0], mo_coeff[1]))
     data.create_dataset("orbcoeff_fb", data=cf_bf.transpose(), compression=8)
@@ -213,7 +214,8 @@ def dump_pyscf(scfres, out):
     mmp.create_dataset("nuclear_0", shape=(), data=int(np.sum(charges)))
     mmp.create_dataset("nuclear_1", data=np.einsum("i,ix->x", charges, coords))
     mmp.create_dataset("elec_0", shape=(), data=-int(n_alpha + n_beta))
-    mmp.create_dataset("elec_1", data=scfres.mol.intor_symmetric("int1e_r", comp=3))
+    mmp.create_dataset("elec_1",
+                       data=scfres.mol.intor_symmetric("int1e_r", comp=3))
 
     data.attrs["backend"] = "pyscf"
     return data
