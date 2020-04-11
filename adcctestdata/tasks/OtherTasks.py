@@ -75,7 +75,7 @@ class TaskDysonExpansionMethod:
         tdem = params.submap("iterated_density")
 
         # Choose some hard-coded parameters for the density iterations
-        tdem["direct"] = "1"
+        tdem["direct"] = "0"
         tdem["convergence"] = str(kwargs.get("conv_tol", 1e-6) / 100)
         tdem["maxiter"] = "1000"
         # TODO Also needs m_n6_prereq_im.insert("oovv");

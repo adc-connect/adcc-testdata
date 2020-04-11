@@ -25,9 +25,9 @@ __all__ = ["parameters"]
 
 
 def resolve_method(method):
-    from . import AdcTasks, IpAdcTasks, MpTasks, OtherTasks
+    from . import IpAdcTasks, MpTasks, OtherTasks, PpAdcTasks
 
-    for module in [MpTasks, OtherTasks, AdcTasks, IpAdcTasks]:
+    for module in [MpTasks, OtherTasks, PpAdcTasks, IpAdcTasks]:
         for clsstr in dir(module):
             if not clsstr.startswith("Task"):
                 continue
