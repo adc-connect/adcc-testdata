@@ -20,7 +20,8 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .MpTasks import TaskMp1
+from .MpTasks import TaskMp1, TaskMp3
+
 from pyadcman import CtxMap
 
 
@@ -50,3 +51,37 @@ class TaskPib:
     @classmethod
     def parameters(cls, **kwargs):
         return CtxMap({"gen_prereq/pib": "1"})
+
+
+class TaskDysonExpansionMethod:
+    # Computes MP3 density or higher-order density via dyson-expansion method
+    dependencies = [TaskMp3, TaskPia, TaskPib]
+    name = "dyson_expansion_method"
+
+    @classmethod
+    def parameters(cls, ground_state_density=None, **kwargs):
+        if ground_state_density is None or ground_state_density == "mp2":
+            return CtxMap()  # No work needed here
+        elif ground_state_density not in ["mp3", "dyson"]:
+            raise ValueError(f"Unrecognised value for "
+                             "ground_state_density: {ground_state_density}")
+
+        adc_variant = kwargs.get("adc_variant", [])
+        if adc_variant != []:
+            raise ValueError("Right now Dyson-expansion method only works for "
+                             "ADC without special variants.")
+
+        params = CtxMap({"iterated_density": "1"})
+        tdem = params.submap("iterated_density")
+
+        # Choose some hard-coded parameters for the density iterations
+        tdem["direct"] = "1"
+        tdem["convergence"] = str(kwargs.get("conv_tol", 1e-6) / 100)
+        tdem["maxiter"] = "1000"
+        # TODO Also needs m_n6_prereq_im.insert("oovv");
+
+        if ground_state_density == "mp3":
+            tdem["order"] = "3"
+        else:
+            tdem["order"] = "3+"
+        return params

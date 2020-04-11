@@ -20,7 +20,6 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .HdfProvider import HdfProvider
 
 try:
     import pyadcman  # noqa: F401
@@ -30,6 +29,7 @@ except ImportError:
 
 from .dump_pyscf import dump_pyscf
 from .run_adcman import run_adcman
+from .HdfProvider import HdfProvider
 from .dump_reference import dump_reference
 
 __all__ = ["HdfProvider", "run_adcman", "dump_pyscf", "dump_reference"]

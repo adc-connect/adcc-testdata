@@ -20,13 +20,14 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from . import AdcTasks, MpTasks, PiTasks
 
 __all__ = ["parameters"]
 
 
 def resolve_method(method):
-    for module in [MpTasks, PiTasks, AdcTasks]:
+    from . import AdcTasks, IpAdcTasks, MpTasks, OtherTasks
+
+    for module in [MpTasks, OtherTasks, AdcTasks, IpAdcTasks]:
         for clsstr in dir(module):
             if not clsstr.startswith("Task"):
                 continue

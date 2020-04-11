@@ -2,7 +2,7 @@
 ## vi: tabstop=4 shiftwidth=4 softtabstop=4 expandtab
 ## ---------------------------------------------------------------------
 ##
-## Copyright (C) 2019 by Michael F. Herbst
+## Copyright (C) 2020 by Michael F. Herbst
 ##
 ## This file is part of adcc-testdata.
 ##
@@ -20,7 +20,7 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .MpTasks import TaskHf, TaskMp1, TaskMp2Td2
+from .MpTasks import TaskHf, TaskMp2
 from .OtherTasks import TaskDysonExpansionMethod
 
 from pyadcman import CtxMap
@@ -30,16 +30,14 @@ from pyadcman import CtxMap
 #   adcman/adcman/qchem/params_reader.C
 
 
-class AdcTaskBase:
+class IpAdcTaskBase:
     @classmethod
     def adc_level(cls):
-        if cls.name == "adc0":
+        if cls.name == "ipadc0":
             return 0
-        if cls.name == "adc1":
-            return 1
-        if cls.name in ["adc2", "adc2x"]:
+        if cls.name == "ipadc2":
             return 2
-        if cls.name == "adc3":
+        if cls.name == "ipadc3":
             return 3
         else:
             raise ValueError("Level cannot be determined for method " + cls.name)
@@ -47,25 +45,28 @@ class AdcTaskBase:
     @classmethod
     def parameters(cls, **kwargs):
         adc_variant = kwargs.get("adc_variant", [])
+        if adc_variant:
+            raise ValueError("Right now IP-ADC has no variants implemented.")
 
         # Determine the variant string
-        variant = cls.name
-        if variant == "adc2":
-            variant = "adc2s"
-        if "ri" in adc_variant:
-            variant = "ri_" + variant
-        if "sos" in adc_variant:
-            variant = "sos_" + variant
-        if "cvs" in adc_variant:
-            variant = "cvs_" + variant
+        assert cls.name[0:2] == "ip"
+        variant = cls.name[2:]
+        # TODO Stuff in PP adc tree
+        # if "ri" in adc_variant:
+        #     variant = "ri_" + variant
+        # if "sos" in adc_variant:
+        #     variant = "sos_" + variant
+        # if "cvs" in adc_variant:
+        #     variant = "cvs_" + variant
 
-        params = CtxMap({"adc_pp": "1"})
-        params["adc_pp/" + variant] = "1"
-        cls.add_common_adc_params_to(params.submap("adc_pp/" + variant), **kwargs)
+        params = CtxMap({"adc_ip": "1"})
+        params["adc_ip/" + variant] = "1"
+        cls.add_common_adc_params_to(params.submap("adc_ip/" + variant), **kwargs)
         return params
 
     @classmethod
     def insert_print_subtree(cls, tree, print_level=1, adc_variant=[], **kwargs):
+        # TODO complete code duplication with PP stuff
         tree["print/print_level"] = str(print_level)
 
         nampl = 0
@@ -91,92 +92,72 @@ class AdcTaskBase:
         return tree
 
     @classmethod
-    def add_common_adc_params_to(cls, tadc, restricted=False, n_singlets=0,
-                                 n_triplets=0, n_states=0,
-                                 ground_state_density=None, **kwargs):
-        adc_variant = kwargs.get("adc_variant", [])
+    def add_common_adc_params_to(cls, tadc, restricted=False, n_ipalpha=0,
+                                 n_ipbeta=0, ground_state_density=None,
+                                 **kwargs):
         cls.insert_print_subtree(tadc, **kwargs)
+
+        # Purge n_states parameter if it's still in the kwargs
+        kwargs.pop("n_states", None)
 
         # Insert intermediates for appropriate ADC level
         tadc["prereq/adc{}_im".format(cls.adc_level())] = "1"
 
-        # Insert iterated density:
+        # Insert effective transition moments
         if cls.adc_level() <= 2:
             if ground_state_density is not None:
                 raise ValueError(f"Explicit selection of ground state density "
                                  "order not compatible with "
-                                 f"ADC{cls.adc_level()}")
+                                 f"IP-ADC{cls.adc_level()}")
+            tadc["prereq/adc{}_etm".format(cls.adc_level())] = "1"
         elif ground_state_density is None or ground_state_density == "mp2":
-            tadc["prereq/iterated_density"] = "0"
-            tadc["prereq/third_order_density"] = "0"
+            tadc["prereq/adc3_etm"] = "2"
         elif ground_state_density == "mp3":
-            tadc["prereq/iterated_density"] = "0"
-            tadc["prereq/third_order_density"] = "1"
+            tadc["prereq/adc3_etm"] = "3"
         elif ground_state_density == "dyson":
-            tadc["prereq/iterated_density"] = "1"
-            tadc["prereq/third_order_density"] = "0"
+            tadc["prereq/adc3_etm"] = "3+"
         else:
             raise ValueError(f"ground_state_density == {ground_state_density} "
-                             "not implemented for ADC(3)")
+                             "not implemented for IP-ADC(3)")
 
         # Build restricted / unrestricted subtree
         if restricted:
-            if "sf" in adc_variant:
-                raise ValueError("Cannot run spin-flip for restricted "
-                                 "references.")
-            if n_states > 0:
-                raise ValueError("Cannot use n_states for restricted references.")
-            if n_singlets + n_triplets == 0:
-                raise ValueError("n_singlets + n_triplets needs to be larger 0 "
+            if n_ipalpha > 0:
+                raise ValueError("Adcman only computes beta ionisations "
                                  "for restricted references.")
 
             tadc["rhf"] = "1"
             tadc["uhf"] = "0"
-            if n_singlets > 0:
-                tadc["rhf/singlets"] = "1"
-                cls.add_state_params_to(tadc.submap("rhf/singlets"), "singlet",
-                                        n_singlets, **kwargs)
-                cls.add_state2state_params_to(tadc.submap("rhf/singlets"),
-                                              "singlet", n_singlets,
-                                              n_singlets, **kwargs)
-            else:
-                tadc["rhf/singlets"] = "0"
-
-            if n_triplets > 0:
-                tadc["rhf/triplets"] = "1"
-                cls.add_state_params_to(tadc.submap("rhf/triplets"), "triplet",
-                                        n_triplets, **kwargs)
-                cls.add_state2state_params_to(tadc.submap("rhf/triplets"),
-                                              "triplet", n_triplets,
-                                              n_triplets, **kwargs)
-            else:
-                tadc["rhf/triplets"] = "0"
-
-            if n_singlets > 0 and n_triplets > 0:
-                # Singlet 2 triplet properties
-                cls.add_state2state_params_to(tadc.submap("rhf"), "s2t",
-                                              n_singlets, n_triplets, **kwargs)
+            cls.add_state_params_to(tadc.submap("rhf"), "restr_beta",
+                                    n_ipbeta, **kwargs)
+            cls.add_state2state_params_to(tadc.submap("rhf"), "restr_beta",
+                                          n_ipbeta, n_ipbeta, **kwargs)
         else:
-            if n_singlets > 0 or n_triplets > 0:
-                raise ValueError("Cannot use n_singlets or n_triplets for "
-                                 "unrestricted references.")
-            if n_states == 0:
-                raise ValueError("n_states needs to be larger 0 for unrestricted "
-                                 "references.")
-
             tadc["rhf"] = "0"
             tadc["uhf"] = "1"
-            cls.add_state_params_to(tadc.submap("uhf"), "any", n_states, **kwargs)
-            cls.add_state2state_params_to(tadc.submap("uhf"), "any", n_states,
-                                          n_states, **kwargs)
+            if n_ipalpha > 0:
+                tadc["uhf/alphas"] = "1"
+                cls.add_state_params_to(tadc.submap("uhf/alphas"),
+                                        "unrestr_alpha", n_ipalpha, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("uhf/alphas"),
+                                              "unrestr_alpha", n_ipalpha,
+                                              n_ipalpha, **kwargs)
+            if n_ipbeta > 0:
+                tadc["uhf/betas"] = "1"
+                cls.add_state_params_to(tadc.submap("uhf/betas"), "unrestr_beta",
+                                        n_ipbeta, **kwargs)
+                cls.add_state2state_params_to(tadc.submap("uhf/betas"),
+                                              "unrestr_beta", n_ipbeta,
+                                              n_ipbeta, **kwargs)
 
     @classmethod
     def add_state_params_to(cls, tspin, spin, n_states, **kwargs):
         """
-        Add the singlet/triplet/any parameters to `tspin`, where `spin`
-        is "singlet", "triplet" or "any" and `n_states` is the number of states
-        to be computed.
+        Add the unrestr_alpha/unrestr_beta/restr_beta parameters to `tspin`, where
+        `spin` is "unrestr_alpha", "unrestr_beta" or "restr_beta" and n_states is
+        the number of states to be computed.
         """
+        # TODO identical to PP case
         # TODO This assumes only a single irrep
         irrep = "0"
         tspin[irrep] = "1"  # enable irrep
@@ -195,27 +176,30 @@ class AdcTaskBase:
         `tirrep` is the subtree for this irrep, `spin` is "singlet", "triplet"
         or "any",`n_states` is the number of states of this irrep to be computed
         """
+        # TODO almost identical to PP case
 
         # Setup spin-related things
         tirrep["spin"] = spin
         tirrep["irrep"] = irrep
         tirrep["nroots"] = str(n_states)
 
-        # Force using the ADC(3) method, which requires precomputation
-        # of pib intermediates
-        tirrep["direct"] = "0"
+        # TODO This exists extra in PP
+        # # Force using the ADC(3) method, which requires precomputation
+        # # of pib intermediates
+        # tirrep["direct"] = "0"
 
         # Compute density matrices
-        tirrep["optdm"] = "1"
+        # tirrep["optdm"] = "1"
         tirrep["opdm"] = "1"
 
-        # Set spin-flip if needed
-        tirrep["spin_flip"] = "0"
-        if "sf" in adc_variant:
-            tirrep["spin_flip"] = "1"
+        # TODO This exists extra in PP
+        # # Set spin-flip if needed
+        # tirrep["spin_flip"] = "0"
+        # if "sf" in adc_variant:
+        #     tirrep["spin_flip"] = "1"
 
         # Properties
-        for pt in ["prop", "tprop"]:
+        for pt in ["prop"]:  # , "tprop"]:
             tirrep[pt + "/."] = "1"
             tirrep[pt + "/dipole"] = "1"
             tirrep[pt + "/rsq"] = "0"
@@ -224,8 +208,8 @@ class AdcTaskBase:
         cls.add_solver_params_to(tirrep, n_states, **kwargs)
 
     @classmethod
-    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=0,
-                             n_guess_doubles=0, solver="davidson", conv_tol=1e-6,
+    def add_solver_params_to(cls, tirrep, n_states, n_guess_h=0,
+                             n_guess_p2h=0, solver="davidson", conv_tol=1e-6,
                              residual_min_norm=1e-12, max_iter=0,
                              max_subspace=60, **kwargs):
         """
@@ -234,16 +218,17 @@ class AdcTaskBase:
         very irrep. Includes keys like:
           - solver
           - davidson
-          - nguess_singles
-          - nguess_doubles
+          - nguess_h
+          - nguess_p2h
           - ...
         """
         # Set number of guesses
-        tirrep["nguess_singles"] = str(n_guess_singles)
-        tirrep["nguess_doubles"] = str(n_guess_doubles)
-        if n_guess_singles + n_guess_doubles < n_states:
-            tirrep["nguess_singles"] = str(n_states - n_guess_doubles)
+        tirrep["nguess_h"] = str(n_guess_h)
+        tirrep["nguess_p2h"] = str(n_guess_p2h)
+        if n_guess_h + n_guess_p2h < n_states:
+            tirrep["nguess_h"] = str(n_states - n_guess_p2h)
 
+        # TODO This part until the end of the function is identical to PP
         # Set solver parameters
         tirrep["solver"] = solver
         tirrep[solver + "/convergence"] = str(conv_tol)
@@ -264,6 +249,7 @@ class AdcTaskBase:
         """
         Parameters for state2state properties
         """
+        # TODO This is identical to PP
         tspin["isr"] = "1"
         irrep1 = irrep2 = "0"  # TODO Assume only one irrep
 
@@ -280,26 +266,16 @@ class AdcTaskBase:
             tirrep["tprop/rsq"] = "0"
 
 
-class TaskAdc0(AdcTaskBase):
+class TaskIpAdc0(IpAdcTaskBase):
     dependencies = [TaskHf]
-    name = "adc0"
+    name = "ipadc0"
 
 
-class TaskAdc1(AdcTaskBase):
-    dependencies = [TaskMp1]
-    name = "adc1"
+class TaskIpAdc2(IpAdcTaskBase):
+    dependencies = [TaskMp2]
+    name = "ipadc2"
 
 
-class TaskAdc2(AdcTaskBase):
-    dependencies = [TaskMp2Td2]
-    name = "adc2"
-
-
-class TaskAdc2x(AdcTaskBase):
-    dependencies = [TaskMp2Td2]
-    name = "adc2x"
-
-
-class TaskAdc3(AdcTaskBase):
+class TaskIpAdc3(IpAdcTaskBase):
     dependencies = [TaskDysonExpansionMethod]
-    name = "adc3"
+    name = "ipadc3"
