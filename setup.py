@@ -40,7 +40,7 @@ setup(
     license="GPL v3",
     #
     packages=find_packages(exclude=["*.test*", "test"]),
-    version='0.1.0',
+    version='0.1.1',
     #
     python_requires='>=3.5',
     install_requires=[
