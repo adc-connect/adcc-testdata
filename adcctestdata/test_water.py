@@ -85,3 +85,13 @@ class TestWater(unittest.TestCase):
                             np.array([0.47048699, 0.57249152, 0.59374785]))
             assert_allclose(res["adc/triplet/eigenvalues"][()],
                             np.array([0.40290068, 0.4913562, 0.52852212]))
+
+    def test_water_ipadc3(self):
+        fn = self.run_scf()
+        # TODO Dump reference not yet implemented for IP-ADC
+        res = atd.run_adcman(fn, "ipadc3", n_ipbeta=5, print_level=2,
+                             ground_state_density="dyson")
+        ips = np.array([res[f"/adc_ip/adc3/rhf/0/ip{i}/energy"]
+                        for i in range(5)])
+        assert_allclose(ips, np.array([0.315887216, 0.391410529, 0.619760418,
+                                       1.067238764, 1.070609008]))

@@ -24,11 +24,10 @@ import os
 import tempfile
 import unittest
 import numpy as np
+import adcctestdata as atd
 import numpy.testing
 
 from pyscf import gto, scf
-
-import adcctestdata as atd
 
 
 def assert_allclose(x, y):
@@ -87,3 +86,17 @@ class TestCn(unittest.TestCase):
             assert_allclose(res["adc/state/eigenvalues"][()],
                             np.array([0.1419152, 0.1419152, 0.17400268,
                                       0.28946901, 0.29998021]))
+
+    def test_cn_ipadc3(self):
+        fn = self.run_scf()
+        # TODO Dump reference not yet implemented for IP-ADC
+        res = atd.run_adcman(fn, "ipadc3", n_ipbeta=5, n_ipalpha=5, print_level=2,
+                             ground_state_density="dyson")
+        αs = np.array([res[f"/adc_ip/adc3/uhf/alphas/0/ip{i}/energy"]
+                       for i in range(5)])
+        βs = np.array([res[f"/adc_ip/adc3/uhf/betas/0/ip{i}/energy"]
+                       for i in range(5)])
+        assert_allclose(αs, np.array([0.4453358, 0.4453358, 0.4520745,
+                                      0.5394661, 0.5394661]))
+        assert_allclose(βs, np.array([0.4162376, 0.4162376, 0.4480881,
+                                      0.6610674, 0.6610675]))

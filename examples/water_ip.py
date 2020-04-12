@@ -20,33 +20,30 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .MpTasks import TaskMp1
-from pyadcman import CtxMap
+import os
+import adcctestdata as atd
 
+from pyscf import gto, scf
 
-class TaskPia:
-    """
-    Computes the following objects into the context
-      - The Pia N^6 intermediates
-           /gen/prereq/pia_o1o1o1v1
-    """
-    dependencies = [TaskMp1]
-    name = "pia"
+if not os.path.isfile("water.hdf5"):
+    mol = gto.M(
+        atom="""
+        O 0 0 0
+        H 0 0 1.795239827225189
+        H 1.693194615993441 0 -0.599043184453037
+        """,
+        basis='def2-tzvp',
+        unit="Bohr"
+    )
+    mf = scf.RHF(mol)
+    mf.conv_tol = 1e-13
+    mf.conv_tol_grad = 1e-12
+    mf.diis = scf.EDIIS()
+    mf.diis_space = 3
+    mf.max_cycle = 500
+    mf.kernel()
 
-    @classmethod
-    def parameters(cls, **kwargs):
-        return CtxMap({"gen_prereq/pia": "1"})
+    atd.dump_pyscf(mf, "water.hdf5")
 
-
-class TaskPib:
-    """
-    Computes the following objects into the context
-      - The Pia N^6 intermediates
-           /gen/prereq/pib_o1v1v1v1
-    """
-    dependencies = [TaskMp1]
-    name = "pib"
-
-    @classmethod
-    def parameters(cls, **kwargs):
-        return CtxMap({"gen_prereq/pib": "1"})
+res = atd.run_adcman("water.hdf5", "ipadc3", n_ipbeta=6, print_level=100,
+                     ground_state_density="dyson")

@@ -20,8 +20,9 @@
 ## along with adcc-testdata. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
-from .MpTasks import TaskHf, TaskMp1, TaskMp2Td2, TaskMp3
-from .PiTasks import TaskPia, TaskPib
+from .MpTasks import TaskHf, TaskMp1, TaskMp2Td2
+from .AdcCommon import AdcCommon
+from .OtherTasks import TaskDysonExpansionMethod
 
 from pyadcman import CtxMap
 
@@ -30,7 +31,11 @@ from pyadcman import CtxMap
 #   adcman/adcman/qchem/params_reader.C
 
 
-class AdcTaskBase:
+# Part of the functions used here, are implemented in AdcCommon
+
+class AdcTaskBase(AdcCommon):
+    adcclass = "pp"
+
     @classmethod
     def adc_level(cls):
         if cls.name == "adc0":
@@ -65,39 +70,33 @@ class AdcTaskBase:
         return params
 
     @classmethod
-    def insert_print_subtree(cls, tree, print_level=1, adc_variant=[], **kwargs):
-        tree["print/print_level"] = str(print_level)
-
-        nampl = 0
-        if print_level >= 1:
-            nampl = 2
-        elif print_level >= 2:
-            nampl = 20
-        elif print_level >= 3:
-            nampl = 40
-        else:
-            nampl = 60
-        tree["print/nampl"] = str(nampl)
-
-        # No PCM at the moment
-        tree["print/pcm"] = "0"  # False
-        tree["print/cvs"] = "0"
-        tree["print/sf"] = "0"
-        if "cvs" in adc_variant:
-            tree["print/cvs"] = "1"
-        if "sf" in adc_variant:
-            tree["print/sf"] = "1"
-
-        return tree
-
-    @classmethod
     def add_common_adc_params_to(cls, tadc, restricted=False, n_singlets=0,
-                                 n_triplets=0, n_states=0, **kwargs):
+                                 n_triplets=0, n_states=0,
+                                 ground_state_density=None, **kwargs):
         adc_variant = kwargs.get("adc_variant", [])
         cls.insert_print_subtree(tadc, **kwargs)
 
         # Insert intermediates for appropriate ADC level
         tadc["prereq/adc{}_im".format(cls.adc_level())] = "1"
+
+        # Insert iterated density:
+        if cls.adc_level() <= 2:
+            if ground_state_density is not None:
+                raise ValueError(f"Explicit selection of ground state density "
+                                 "order not compatible with "
+                                 f"ADC{cls.adc_level()}")
+        elif ground_state_density is None or ground_state_density == "mp2":
+            tadc["prereq/iterated_density"] = "0"
+            tadc["prereq/third_order_density"] = "0"
+        elif ground_state_density == "mp3":
+            tadc["prereq/iterated_density"] = "0"
+            tadc["prereq/third_order_density"] = "1"
+        elif ground_state_density == "dyson":
+            tadc["prereq/iterated_density"] = "1"
+            tadc["prereq/third_order_density"] = "0"
+        else:
+            raise ValueError(f"ground_state_density == {ground_state_density} "
+                             "not implemented for ADC(3)")
 
         # Build restricted / unrestricted subtree
         if restricted:
@@ -150,118 +149,6 @@ class AdcTaskBase:
             cls.add_state2state_params_to(tadc.submap("uhf"), "any", n_states,
                                           n_states, **kwargs)
 
-    @classmethod
-    def add_state_params_to(cls, tspin, spin, n_states, **kwargs):
-        """
-        Add the singlet/triplet/any parameters to `tspin`, where `spin`
-        is "singlet", "triplet" or "any" and `n_states` is the number of states
-        to be computed.
-        """
-        # TODO This assumes only a single irrep
-        irrep = "0"
-        tspin[irrep] = "1"  # enable irrep
-        cls.add_state_irrep_params_to(tspin.submap(irrep), spin, irrep,
-                                      n_states, **kwargs)
-
-    @classmethod
-    def add_state_irrep_params_to(cls, tirrep, spin, irrep, n_states,
-                                  adc_variant=[], **kwargs):
-        """
-        Add the subtree data for a particular irrep. Adds keys like:
-          - solver
-          - spin
-          - ...
-
-        `tirrep` is the subtree for this irrep, `spin` is "singlet", "triplet"
-        or "any",`n_states` is the number of states of this irrep to be computed
-        """
-
-        # Setup spin-related things
-        tirrep["spin"] = spin
-        tirrep["irrep"] = irrep
-        tirrep["nroots"] = str(n_states)
-
-        # Force using the ADC(3) method, which requires precomputation
-        # of pib intermediates
-        tirrep["direct"] = "0"
-
-        # Compute density matrices
-        tirrep["optdm"] = "1"
-        tirrep["opdm"] = "1"
-
-        # Set spin-flip if needed
-        tirrep["spin_flip"] = "0"
-        if "sf" in adc_variant:
-            tirrep["spin_flip"] = "1"
-
-        # Two-photon absorption
-        # tirrep["tpa"] = "1"
-
-        # Properties
-        for pt in ["prop", "tprop"]:
-            tirrep[pt + "/."] = "1"
-            tirrep[pt + "/dipole"] = "1"
-            tirrep[pt + "/rsq"] = "0"
-
-        # Setup solver-related parameters inside the subtree
-        cls.add_solver_params_to(tirrep, n_states, **kwargs)
-
-    @classmethod
-    def add_solver_params_to(cls, tirrep, n_states, n_guess_singles=0,
-                             n_guess_doubles=0, solver="davidson", conv_tol=1e-6,
-                             residual_min_norm=1e-12, max_iter=0,
-                             max_subspace=60, **kwargs):
-        """
-        Add parameters which distinguish between the various adc methods to the
-        parameter tree. `n_states` is the number of states to compute in this
-        very irrep. Includes keys like:
-          - solver
-          - davidson
-          - nguess_singles
-          - nguess_doubles
-          - ...
-        """
-        # Set number of guesses
-        tirrep["nguess_singles"] = str(n_guess_singles)
-        tirrep["nguess_doubles"] = str(n_guess_doubles)
-        if n_guess_singles + n_guess_doubles < n_states:
-            tirrep["nguess_singles"] = str(n_states - n_guess_doubles)
-
-        # Set solver parameters
-        tirrep["solver"] = solver
-        tirrep[solver + "/convergence"] = str(conv_tol)
-        tirrep[solver + "/maxiter"] = str(max_iter)
-        tirrep[solver + "/threshold"] = str(residual_min_norm)
-
-        # Special adjustment for davidson
-        if solver == "davidson":
-            if max_subspace == 0:
-                max_subspace = 5 * n_states
-            elif max_subspace < n_states:
-                max_subspace = 2 * n_states
-            tirrep["davidson/maxsubspace"] = str(max_subspace)
-
-    @classmethod
-    def add_state2state_params_to(cls, tspin, spin, n_states1, n_states2,
-                                  **kwargs):
-        """
-        Parameters for state2state properties
-        """
-        tspin["isr"] = "1"
-        irrep1 = irrep2 = "0"  # TODO Assume only one irrep
-
-        tirrep = tspin.submap("isr/" + irrep1 + "-" + irrep2)
-        tirrep["."] = "1"      # Enable state2state for irrep
-        tirrep["optdm"] = "1"  # Transition density matrices
-        tirrep["tprop"] = "1"  # Transition properties
-
-        if spin in ["s2t", "any"]:
-            # Spin-orbit coupling
-            tirrep["tprop/soc"] = "0"
-        if spin != "s2t":
-            tirrep["tprop/dipole"] = "1"
-            tirrep["tprop/rsq"] = "0"
-
 
 class TaskAdc0(AdcTaskBase):
     dependencies = [TaskHf]
@@ -284,5 +171,5 @@ class TaskAdc2x(AdcTaskBase):
 
 
 class TaskAdc3(AdcTaskBase):
-    dependencies = [TaskMp3, TaskPia, TaskPib]
+    dependencies = [TaskDysonExpansionMethod]
     name = "adc3"
