@@ -217,13 +217,14 @@ def dump_pyscf(scfres, out):
     mmp.create_dataset("elec_1",
                        data=scfres.mol.intor_symmetric("int1e_r", comp=3))
 
-    varop = data.create_group("uncategorized_operators")
+    magm = data.create_group("magnetic_moments")
+    derivs = data.create_group("derivatives")
     with scfres.mol.with_common_orig([0.0, 0.0, 0.0]):
-        mmp.create_dataset(
+        magm.create_dataset(
             "mag_1",
             data=0.5 * scfres.mol.intor('int1e_cg_irxp', comp=3, hermi=2)
         )
-        varop.create_dataset(
+        derivs.create_dataset(
             "nabla",
             data=-1.0 * scfres.mol.intor('int1e_ipovlp', comp=3, hermi=2)
         )
