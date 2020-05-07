@@ -34,7 +34,7 @@ from .dump_reference import dump_reference
 
 __all__ = ["HdfProvider", "run_adcman", "dump_pyscf", "dump_reference"]
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __license__ = "GPL v3"
 __authors__ = ["Michael F. Herbst"]
 __email__ = "developers@adc-connect.org"
