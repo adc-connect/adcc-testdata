@@ -21,7 +21,6 @@
 ##
 ## ---------------------------------------------------------------------
 from .MpTasks import TaskMp1, TaskMp3
-
 from pyadcman import CtxMap
 
 
@@ -63,8 +62,8 @@ class TaskDysonExpansionMethod:
         if ground_state_density is None or ground_state_density == "mp2":
             return CtxMap()  # No work needed here
         elif ground_state_density not in ["mp3", "dyson"]:
-            raise ValueError(f"Unrecognised value for "
-                             "ground_state_density: {ground_state_density}")
+            raise ValueError("Unrecognised value for "
+                             f"ground_state_density: {ground_state_density}")
 
         adc_variant = kwargs.get("adc_variant", [])
         if adc_variant != []:
