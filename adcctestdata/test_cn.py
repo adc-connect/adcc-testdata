@@ -83,9 +83,8 @@ class TestCn(unittest.TestCase):
             res = atd.dump_reference(fn, "adc2", tmpdir + "/out.hdf5",
                                      n_states_full=2, n_states=5, print_level=2,
                                      frozen_core=[0, 10])
-            assert_allclose(res["adc/state/eigenvalues"][()],
-                            np.array([0.1419152, 0.1419152, 0.17400268,
-                                      0.28946901, 0.29998021]))
+            assert_allclose(res["adc/state/eigenvalues"][:3],
+                            np.array([0.1419152, 0.1419152, 0.17400268]))
 
     def test_cn_ipadc3(self):
         fn = self.run_scf()
