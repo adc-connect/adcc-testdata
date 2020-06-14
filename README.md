@@ -1,6 +1,6 @@
 # adcc-testdata
 [![license](https://img.shields.io/github/license/adc-connect/adcc-testdata.svg?maxAge=2592000)](https://github.com/adc-connect/adcc-testdata/blob/master/LICENSE)
-[![Build Status](https://travis-ci.org/adc-connect/adcc-testdata.svg?branch=master)](https://travis-ci.org/adc-connect/adcc-testdata)
+[![Build Status](https://travis-ci.com/adc-connect/adcc-testdata.svg?branch=master)](https://travis-ci.com/adc-connect/adcc-testdata)
 
 
 Test data generation scripts for [adcc](https://adc-connect.org).
