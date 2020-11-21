@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    name: Unit tests  # Installation from Julia & Julia tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - uses: actions/cache@v1
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+      - name: Get pyadcman
+        run: bash ci/get_pyadcman.sh
+        env:
+          PYADCMAN_PASSWORD: ${{ secrets.PYADCMAN_PASSWORD }}
+          PYADCMAN_USER: gha
+      - name: Install dependencies
+        run: |
+          sudo apt-get install libopenblas-base
+          pip install -r requirements.txt
+          pip install flake8 pytest
+      - name: Run flake8
+        run: flake8
+      - name: Run tests
+        run: python3 setup.py test
