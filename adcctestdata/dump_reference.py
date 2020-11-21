@@ -202,6 +202,7 @@ def dump_reference(data, method, dumpfile, mp_tree="mp", adc_tree="adc",
             transition_dipoles = []
 
             for ito in range(ifrom + 1, n_states):
+                # Note: Adcman really stores the states as ito-ifrom
                 pairtree = ctx.submap(kind_trees[kind]
                                       + "/{}-{}".format(ito, ifrom))
 
