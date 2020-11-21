@@ -27,8 +27,8 @@ jobs:
       - name: Get pyadcman
         run: bash ci/get_pyadcman.sh
         env:
-          PYADCMAN_PASSWORD=${{ secrets.PYADCMAN_PASSWORD }}
-          PYADCMAN_USER=gha
+          PYADCMAN_PASSWORD: ${{ secrets.PYADCMAN_PASSWORD }}
+          PYADCMAN_USER: gha
       - name: Install dependencies
         run: |
           sudo apt-get install libopenblas-base
